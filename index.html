@@ -20,9 +20,10 @@
 <body>
   <div id="root"></div>
   <div id="user-list"></div>
-  <video id="received-video"></video>
+  <video autoplay id="my-video"></video>
+  <video autoplay id="received-video"></video>
   <script>
-    Notification.requestPermission().then(function(result) {
+    Notification.requestPermission().then( (result) => {
       console.log(result);
     });
 
@@ -93,10 +94,9 @@
         this.socket.on("offer", message => {
           console.log("got offer: ", JSON.stringify(message));
           const connection = createConnection();
-          connection.ontrack = (event) => {
+          connection.onaddstream = (event) => {
             const url = URL.createObjectURL(event.stream);
             console.log("video url: ", url);
-            debugger;
             document.getElementById("received-video").src = url;
           }
 
@@ -131,7 +131,8 @@
 
           connection.setRemoteDescription(new RTCSessionDescription(message.data)).then(() => {
             connection.createAnswer({
-              OfferToReceiveAudio: true
+              OfferToReceiveAudio: true,
+              OfferToReceiveVideo : true
             }).then(answer => {
               connection.setLocalDescription(answer).then(() => {
                 const msg = {from: message.to, to: message.from, data: answer};
@@ -158,29 +159,41 @@
 
       onUserSelect(user) {
         const connection = createConnection();
+        
         navigator.mediaDevices.getUserMedia({video:true, audio:true})
-        .then(function(stream) {
+        .then((stream) => {
           /* use the stream */
+          const url = URL.createObjectURL(stream);
+          document.getElementById("my-video").src = url;
           connection.addStream(stream);
+
+          connection.createOffer({ OfferToReceiveAudio: true, OfferToReceiveVideo : true }).then(offer => {
+            connection.setLocalDescription(offer).then(() => {
+            const message = {from: this.socket.id, to: user.socketId, data: offer};
+            console.log("send offer: ", JSON.stringify(message))
+            this.socket.emit("offer", message);
+          });
+        });
+
         })
         .catch(function(err) {
           /* handle the error */
         });
 
-        const channel = connection.createDataChannel("data-channel");
-        channel.onopen = (event) => {
-          console.log("data channel opened.");
-          this.setState({
-            [user.socketId]: {connection, channel}
-          }, () => {
-            console.log("state: ", this.state)});
-            const message = prompt("put a message");
-            channel.send(message);
-        }
-        channel.onmessage = (event) => {
-          console.log("got message: ", event.data);
-          new Notification("from " + user.socketId + ": " + event.data);
-        }
+        // const channel = connection.createDataChannel("data-channel");
+        // channel.onopen = (event) => {
+        //   console.log("data channel opened.");
+        //   this.setState({
+        //     [user.socketId]: {connection, channel}
+        //   }, () => {
+        //     console.log("state: ", this.state)});
+        //     const message = prompt("put a message");
+        //     channel.send(message);
+        // }
+        // channel.onmessage = (event) => {
+        //   console.log("got message: ", event.data);
+        //   new Notification("from " + user.socketId + ": " + event.data);
+        // }
 
         connection.onicecandidate = (event) => {
           console.log('candidate event:', event);
@@ -197,7 +210,7 @@
           }
         };
 
-        connection.createOffer({ OfferToReceiveAudio: true }).then(offer => {
+        connection.createOffer({ OfferToReceiveAudio: true, OfferToReceiveVideo : true }).then(offer => {
             connection.setLocalDescription(offer).then(() => {
             const message = {from: this.socket.id, to: user.socketId, data: offer};
             console.log("send offer: ", JSON.stringify(message))
