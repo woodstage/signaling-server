@@ -1,4 +1,5 @@
-const app = require("express")();
+const express = require("express");
+const app = express();
 const https = require("https");
 const fs = require("fs");
 
@@ -18,9 +19,10 @@ const users = {
   3: { id: 3, name: "hongda", token: "cccccc" }
 };
 
-app.get("/", function(req, res) {
-  res.sendFile(__dirname + "/index.html");
-});
+// app.get("/", function(req, res) {
+//   res.sendFile(__dirname + "/index.html");
+// });
+app.use('/', express.static('example'));
 
 // middleware
 io.use((socket, next) => {

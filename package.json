@@ -5,15 +5,18 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "build": "browserify WebRTCClient.js -o example/webrtcclient.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "emitter": "0.0.5",
     "express": "^4.16.2",
     "socket.io": "^2.0.4"
   },
   "devDependencies": {
+    "browserify": "^14.5.0",
     "nodemon": "^1.12.1"
   }
 }

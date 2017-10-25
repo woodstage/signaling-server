@@ -6,6 +6,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.0.0/umd/react-dom.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/create-react-class@15.6.2/create-react-class.js"></script>
+  <script src="./webrtcclient.js"></script>
   <style>
     .online {
       color: green;
@@ -180,20 +181,20 @@
           /* handle the error */
         });
 
-        // const channel = connection.createDataChannel("data-channel");
-        // channel.onopen = (event) => {
-        //   console.log("data channel opened.");
-        //   this.setState({
-        //     [user.socketId]: {connection, channel}
-        //   }, () => {
-        //     console.log("state: ", this.state)});
-        //     const message = prompt("put a message");
-        //     channel.send(message);
-        // }
-        // channel.onmessage = (event) => {
-        //   console.log("got message: ", event.data);
-        //   new Notification("from " + user.socketId + ": " + event.data);
-        // }
+        const channel = connection.createDataChannel("data-channel");
+        channel.onopen = (event) => {
+          console.log("data channel opened.");
+          this.setState({
+            [user.socketId]: {connection, channel}
+          }, () => {
+            console.log("state: ", this.state)});
+            const message = prompt("put a message");
+            channel.send(message);
+        }
+        channel.onmessage = (event) => {
+          console.log("got message: ", event.data);
+          new Notification("from " + user.socketId + ": " + event.data);
+        }
 
         connection.onicecandidate = (event) => {
           console.log('candidate event:', event);
