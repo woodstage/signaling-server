@@ -64,25 +64,29 @@ io.on("connection", socket => {
     emitUsers();
   });
 
-  socket.on("offer", message => {
-    console.log("got offer: ", message);
-    socket.broadcast.to(message.to).emit("offer", message);
-  });
-
-  socket.on("answer", message => {
-    console.log("got answer: ", message);
-    socket.broadcast.to(message.to).emit("answer", message);
-  });
-
-  socket.on("candidate", message => {
-    console.log("got candidate: ", message);
-    socket.broadcast.to(message.to).emit("candidate", message);
+  // message
+  socket.on("_message", message => {
+    const toUser = users[message.to];
+    const fromUser = Object.values(users).find(user => user.socketId === socket.id);
+    if(toUser && toUser.socketId) {
+      io.sockets.connected[toUser.socketId].once("_message_ack_" + message.id, resp => {
+        console.log(`${toUser.socketId} => server`, resp);
+        console.log(`server => ${fromUser.socketId}`, resp);
+        console.log("_message_ack_" + message.id, resp);
+        socket.emit("_message_ack_" + message.id, resp);
+      });
+      const msg = {id: message.id, from: fromUser.profile.id, data: message.data};
+      console.log(`${fromUser.socketId} => ${toUser.socketId}`, msg);
+      socket.to(toUser.socketId).emit("_message", msg);
+    } else {
+      console.error("user not available");
+    }
   });
 });
 
 function emitUsers() {
   io.clients((error, clients) => {
     if (error) throw error;
-    io.emit("user-list", users);
+    io.emit("_users", users);
   });
 }
